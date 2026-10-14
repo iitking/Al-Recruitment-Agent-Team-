@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Recruitment Agent Team — Recruiter Dashboard</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .badge { display: inline-flex; align-items: center; padding: 0.25rem 0.65rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+    .badge-applied { background-color: #f1f5f9; color: #475569; }
+    .badge-review { background-color: #fef3c7; color: #b45309; }
+    .badge-approved { background-color: #dcfce7; color: #15803d; }
+    .badge-scheduled { background-color: #e0e7ff; color: #4338ca; }
+    .badge-flagged { background-color: #fee2e2; color: #b91c1c; }
+    .badge-completed { background-color: #f3e8ff; color: #6b21a8; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+
+  <!-- Top Navbar -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md">
+          <i data-lucide="bot" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-slate-900 leading-tight">AI Recruitment Agent Team</h1>
+          <p class="text-xs text-slate-500">Autonomous Resume Screening to Interview Scheduling</p>
+        </div>
+      </div>
+      
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2 text-xs font-medium text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>5 Specialized Agents Active</span>
+        </div>
+        <button onclick="openNewJobModal()" class="inline-flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-sm transition">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span>Create Opening</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Metrics Banner -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 w-full">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Active Openings</p>
+          <p id="metric-jobs" class="text-2xl font-bold text-slate-900 mt-1">0</p>
+        </div>
+        <div class="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
+          <i data-lucide="briefcase" class="w-5 h-5"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Total Applicants</p>
+          <p id="metric-candidates" class="text-2xl font-bold text-slate-900 mt-1">0</p>
+        </div>
+        <div class="p-3 bg-blue-50 text-blue-600 rounded-lg">
+          <i data-lucide="users" class="w-5 h-5"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Avg Screen Score</p>
+          <p id="metric-score" class="text-2xl font-bold text-slate-900 mt-1">--</p>
+        </div>
+        <div class="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
+          <i data-lucide="award" class="w-5 h-5"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Interviews Booked</p>
+          <p id="metric-interviews" class="text-2xl font-bold text-slate-900 mt-1">0</p>
+        </div>
+        <div class="p-3 bg-violet-50 text-violet-600 rounded-lg">
+          <i data-lucide="calendar" class="w-5 h-5"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Layout -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1">
+    
+    <!-- Controls Bar -->
+    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <!-- Job Filter -->
+      <div class="flex items-center space-x-3">
+        <label class="text-xs font-semibold uppercase tracking-wider text-slate-500">Filter By Role:</label>
+        <select id="job-select-filter" onchange="filterCandidatesByJob()" class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          <option value="">All Job Openings</option>
+        </select>
+      </div>
+
+      <!-- Resume Upload Button -->
+      <div class="flex items-center space-x-3">
+        <input type="file" id="resume-file-input" multiple accept=".pdf,.docx,.txt" class="hidden" onchange="handleFileUpload(event)" />
+        <button onclick="document.getElementById('resume-file-input').click()" class="inline-flex items-center space-x-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium px-4 py-2 rounded-lg transition shadow-sm">
+          <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+          <span>Upload Candidate Resumes (PDF / DOCX)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Candidate Pipeline Grid / Table -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+      <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+        <h2 class="text-base font-semibold text-slate-900">Candidate Pipeline & Agent Screening</h2>
+        <span id="candidate-count-badge" class="text-xs font-semibold px-2.5 py-1 bg-slate-200 text-slate-700 rounded-full">0 candidates</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-600">
+          <thead class="bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+            <tr>
+              <th class="px-6 py-3.5">Candidate</th>
+              <th class="px-6 py-3.5">Job Role</th>
+              <th class="px-6 py-3.5">Screening Score</th>
+              <th class="px-6 py-3.5">Agent Recommendation</th>
+              <th class="px-6 py-3.5">Status</th>
+              <th class="px-6 py-3.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="candidate-table-body" class="divide-y divide-slate-200">
+            <tr>
+              <td colspan="6" class="px-6 py-8 text-center text-slate-400">Loading candidate pipeline...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Audit Event Log Feed -->
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="activity" class="w-5 h-5 text-indigo-600"></i>
+          <h3 class="text-base font-semibold text-slate-900">Live Agent Audit Trail</h3>
+        </div>
+        <span class="text-xs text-slate-400">Tamper-evident workflow events</span>
+      </div>
+      <div id="audit-feed" class="space-y-3 max-h-64 overflow-y-auto pr-2">
+        <p class="text-xs text-slate-400">No events recorded yet.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Candidate Inspection & Decision Drawer (Modal) -->
+  <div id="candidate-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-4xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+      
+      <!-- Drawer Header -->
+      <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <div>
+          <h3 id="modal-candidate-name" class="text-lg font-bold text-slate-900">Candidate Details</h3>
+          <p id="modal-candidate-meta" class="text-xs text-slate-500">ID: ... | Email: ...</p>
+        </div>
+        <button onclick="closeCandidateModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200/50">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Drawer Body -->
+      <div class="p-6 overflow-y-auto space-y-6 flex-1 text-sm">
+        
+        <!-- Status & Score Header Banner -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <div>
+            <span class="text-xs font-semibold text-slate-400 uppercase">Current Status</span>
+            <div id="modal-status-badge" class="mt-1">--</div>
+          </div>
+          <div>
+            <span class="text-xs font-semibold text-slate-400 uppercase">Match Score</span>
+            <p id="modal-match-score" class="text-xl font-bold text-indigo-600 mt-1">--%</p>
+          </div>
+          <div>
+            <span class="text-xs font-semibold text-slate-400 uppercase">Recommendation</span>
+            <p id="modal-recommendation" class="text-sm font-semibold text-slate-800 mt-1">--</p>
+          </div>
+        </div>
+
+        <!-- Extraction Warnings Banner (if any) -->
+        <div id="modal-warnings-container" class="hidden bg-amber-50 border border-amber-200 p-4 rounded-xl text-amber-800 text-xs">
+          <p class="font-bold flex items-center space-x-1 mb-1">
+            <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+            <span>Extraction Warnings (Manual Review Recommended)</span>
+          </p>
+          <ul id="modal-warnings-list" class="list-disc list-inside space-y-0.5"></ul>
+        </div>
+
+        <!-- Evidence-Based Matching Report -->
+        <div>
+          <h4 class="text-sm font-bold text-slate-900 mb-3 flex items-center space-x-2">
+            <i data-lucide="file-check" class="w-4 h-4 text-emerald-600"></i>
+            <span>Evidence-Based Screening Analysis</span>
+          </h4>
+          
+          <div class="space-y-3">
+            <div>
+              <p class="text-xs font-semibold text-slate-500 mb-2">Matched Requirements & Provenance Snippets:</p>
+              <div id="modal-matched-list" class="space-y-2"></div>
+            </div>
+
+            <div>
+              <p class="text-xs font-semibold text-slate-500 mb-2 mt-4">Missing or Unclear Criteria:</p>
+              <div id="modal-missing-list" class="flex flex-wrap gap-2"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recruiter Review Action Bar -->
+        <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+          <h4 class="text-xs font-bold text-indigo-950 uppercase tracking-wider mb-2">Human Recruiter Decision</h4>
+          <p class="text-xs text-slate-600 mb-3">AI recommendations provide decision support; final determination is made by human recruiter.</p>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="submitReview('approved')" class="inline-flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium px-3.5 py-2 rounded-lg transition">
+              <i data-lucide="check" class="w-3.5 h-3.5"></i>
+              <span>Approve for Interview</span>
+            </button>
+            <button onclick="submitReview('clarification_requested')" class="inline-flex items-center space-x-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium px-3.5 py-2 rounded-lg transition">
+              <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
+              <span>Request Clarification</span>
+            </button>
+            <button onclick="submitReview('on_hold')" class="inline-flex items-center space-x-1.5 bg-slate-600 hover:bg-slate-700 text-white text-xs font-medium px-3.5 py-2 rounded-lg transition">
+              <i data-lucide="pause" class="w-3.5 h-3.5"></i>
+              <span>Put On Hold</span>
+            </button>
+            <button onclick="submitReview('rejected')" class="inline-flex items-center space-x-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium px-3.5 py-2 rounded-lg transition">
+              <i data-lucide="x" class="w-3.5 h-3.5"></i>
+              <span>Reject Candidate</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Candidate Communication Panel -->
+        <div class="border border-slate-200 rounded-xl p-4">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Candidate Email Draft (Agent Generated)</h4>
+            <button onclick="generateDraft()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">Re-draft with Agent</button>
+          </div>
+          <div class="space-y-2">
+            <input type="text" id="email-subject-input" placeholder="Subject" class="w-full text-xs border border-slate-300 rounded px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500" />
+            <textarea id="email-body-input" rows="4" placeholder="Body" class="w-full text-xs border border-slate-300 rounded px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono"></textarea>
+            <button onclick="sendDraftEmail()" class="inline-flex items-center space-x-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3.5 py-2 rounded-lg transition">
+              <i data-lucide="send" class="w-3.5 h-3.5"></i>
+              <span>Dispatch Email via Agent</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Interview Scheduling Panel -->
+        <div class="border border-slate-200 rounded-xl p-4">
+          <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-2">Schedule Interview (Calendar Agent)</h4>
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs text-slate-500">Autonomous calendar slot suggestion with collision avoidance.</p>
+            <button onclick="fetchSlots()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">Find Available Slots</button>
+          </div>
+          <div id="modal-slots-list" class="grid grid-cols-1 md:grid-cols-3 gap-2"></div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Create Job Opening Modal -->
+  <div id="new-job-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl p-6">
+      <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-200">
+        <h3 class="text-base font-bold text-slate-900">Create New Job Opening</h3>
+        <button onclick="closeNewJobModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form onsubmit="submitNewJob(event)" class="space-y-4 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Job Title *</label>
+          <input type="text" id="new-job-title" required placeholder="e.g. Senior Machine Learning Engineer" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Department</label>
+          <input type="text" id="new-job-dept" placeholder="e.g. Engineering / AI Labs" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Job Description *</label>
+          <textarea id="new-job-desc" required rows="3" placeholder="Describe core responsibilities..." class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Required Skills (comma separated)</label>
+            <input type="text" id="new-job-req-skills" placeholder="Python, FastAPI, SQL" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Preferred Skills</label>
+            <input type="text" id="new-job-pref-skills" placeholder="Docker, Kubernetes, PyTorch" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Min Experience (Years)</label>
+          <input type="number" id="new-job-exp" value="2" min="0" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+
+        <div class="flex justify-end space-x-2 pt-2">
+          <button type="button" onclick="closeNewJobModal()" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition">Create Job</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript Application Logic -->
+  <script>
+    let activeCandidateId = null;
+    let currentCandidates = [];
+    let currentJobs = [];
+
+    async function initDashboard() {
+      await loadMetrics();
+      await loadJobs();
+      await loadCandidates();
+      lucide.createIcons();
+    }
+
+    async function loadMetrics() {
+      try {
+        const res = await fetch('/api/dashboard/summary');
+        const data = await res.json();
+        document.getElementById('metric-jobs').innerText = data.active_jobs || 0;
+        document.getElementById('metric-candidates').innerText = data.total_candidates || 0;
+        document.getElementById('metric-score').innerText = data.avg_screening_score ? `${data.avg_screening_score}%` : '--';
+        document.getElementById('metric-interviews').innerText = data.scheduled_interviews_count || 0;
+
+        // Render audit events
+        const feed = document.getElementById('audit-feed');
+        if (data.recent_events && data.recent_events.length > 0) {
+          feed.innerHTML = data.recent_events.map(e => `
+            <div class="text-xs p-2.5 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-between">
+              <div>
+                <span class="font-semibold text-slate-900">[${e.actor_type.toUpperCase()}]</span> 
+                <span class="text-slate-700">${e.event_type}</span>
+                <span class="text-slate-400">→ ${e.new_status}</span>
+              </div>
+              <span class="text-[10px] text-slate-400">${new Date(e.timestamp).toLocaleTimeString()}</span>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.error("Failed to load metrics:", err);
+      }
+    }
+
+    async function loadJobs() {
+      try {
+        const res = await fetch('/api/jobs');
+        currentJobs = await res.json();
+        const select = document.getElementById('job-select-filter');
+        select.innerHTML = '<option value="">All Job Openings</option>' + 
+          currentJobs.map(j => `<option value="${j.id}">${j.title} (${j.candidate_count || 0})</option>`).join('');
+      } catch (err) {
+        console.error("Failed to load jobs:", err);
+      }
+    }
+
+    async function loadCandidates(jobId = '') {
+      try {
+        const url = jobId ? `/api/candidates?job_id=${jobId}` : '/api/candidates';
+        const res = await fetch(url);
+        currentCandidates = await res.json();
+        
+        document.getElementById('candidate-count-badge').innerText = `${currentCandidates.length} candidates`;
+        const tbody = document.getElementById('candidate-table-body');
+        
+        if (currentCandidates.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-slate-400">No candidates uploaded yet. Click 'Upload Candidate Resumes' to screen applicants!</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = currentCandidates.map(c => {
+          const score = c.latest_score !== null ? `${c.latest_score}%` : 'Pending';
+          const rec = c.latest_recommendation || 'Analyzing';
+          const statusBadge = getStatusBadge(c.status);
+
+          const jobTitle = currentJobs.find(j => j.id === c.job_id)?.title || 'Assigned Role';
+
+          return `
+            <tr class="hover:bg-slate-50/75 transition">
+              <td class="px-6 py-4">
+                <div class="font-medium text-slate-900">${c.name || 'Candidate'}</div>
+                <div class="text-xs text-slate-400">${c.email || 'No email parsed'}</div>
+              </td>
+              <td class="px-6 py-4 text-slate-700">${jobTitle}</td>
+              <td class="px-6 py-4">
+                <span class="font-bold text-slate-900">${score}</span>
+              </td>
+              <td class="px-6 py-4">
+                <span class="text-xs font-semibold px-2 py-0.5 rounded ${getRecStyle(rec)}">${rec}</span>
+              </td>
+              <td class="px-6 py-4">${statusBadge}</td>
+              <td class="px-6 py-4 text-right">
+                <button onclick="inspectCandidate('${c.id}')" class="text-xs bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 font-medium px-3 py-1.5 rounded-lg border border-slate-200 transition">
+                  Inspect & Review
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+        lucide.createIcons();
+      } catch (err) {
+        console.error("Failed to load candidates:", err);
+      }
+    }
+
+    function getStatusBadge(status) {
+      if (status === 'Applied') return `<span class="badge badge-applied">Applied</span>`;
+      if (status === 'RecruiterReview') return `<span class="badge badge-review">Under Review</span>`;
+      if (status === 'ApprovedForInterview' || status === 'AwaitingAvailability') return `<span class="badge badge-approved">Approved</span>`;
+      if (status === 'Scheduled') return `<span class="badge badge-scheduled">Scheduled</span>`;
+      if (status === 'InterviewCompleted') return `<span class="badge badge-completed">Completed</span>`;
+      if (status === 'NeedsManualReview' || status === 'Rejected') return `<span class="badge badge-flagged">${status}</span>`;
+      return `<span class="badge badge-applied">${status}</span>`;
+    }
+
+    function getRecStyle(rec) {
+      if (rec === 'Strong Match') return 'bg-emerald-100 text-emerald-800';
+      if (rec === 'Potential Match') return 'bg-blue-100 text-blue-800';
+      if (rec === 'Needs Clarification') return 'bg-amber-100 text-amber-800';
+      return 'bg-slate-100 text-slate-700';
+    }
+
+    function filterCandidatesByJob() {
+      const jobId = document.getElementById('job-select-filter').value;
+      loadCandidates(jobId);
+    }
+
+    async function handleFileUpload(event) {
+      const files = event.target.files;
+      if (!files || files.length === 0) return;
+
+      // Select default job or first job
+      let jobId = document.getElementById('job-select-filter').value;
+      if (!jobId) {
+        if (currentJobs.length === 0) {
+          alert("Please create a Job Opening first before uploading resumes.");
+          openNewJobModal();
+          return;
+        }
+        jobId = currentJobs[0].id;
+      }
+
+      const formData = new FormData();
+      for (let i = 0; i < files.length; i++) {
+        formData.append("files", files[i]);
+      }
+
+      try {
+        const res = await fetch(`/api/jobs/${jobId}/resumes`, {
+          method: "POST",
+          body: formData
+        });
+        if (res.ok) {
+          alert(`Successfully uploaded and parsed ${files.length} resume(s)!`);
+          await initDashboard();
+        } else {
+          alert("Upload failed. Check logs.");
+        }
+      } catch (err) {
+        alert("Upload error: " + err);
+      }
+    }
+
+    async function inspectCandidate(candidateId) {
+      activeCandidateId = candidateId;
+      const c = currentCandidates.find(item => item.id === candidateId);
+      if (!c) return;
+
+      document.getElementById('modal-candidate-name').innerText = c.name || "Candidate";
+      document.getElementById('modal-candidate-meta').innerText = `ID: ${c.id} | Email: ${c.email || 'N/A'} | Phone: ${c.phone || 'N/A'}`;
+      document.getElementById('modal-status-badge').innerHTML = getStatusBadge(c.status);
+
+      // Fetch Screening Report
+      try {
+        const repRes = await fetch(`/api/candidates/${candidateId}/report`);
+        if (repRes.ok) {
+          const report = await repRes.json();
+          document.getElementById('modal-match-score').innerText = `${report.match_score}%`;
+          document.getElementById('modal-recommendation').innerText = report.recommendation;
+
+          // Evidence snippets
+          const matchedContainer = document.getElementById('modal-matched-list');
+          matchedContainer.innerHTML = report.matched_requirements.map(m => `
+            <div class="p-2.5 bg-emerald-50/50 border border-emerald-200/60 rounded-lg text-xs">
+              <p class="font-semibold text-emerald-950 flex items-center space-x-1.5">
+                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600"></i>
+                <span>${m.requirement}</span>
+              </p>
+              <p class="text-slate-600 mt-1 italic pl-5">“${m.evidence}”</p>
+            </div>
+          `).join('');
+
+          // Missing
+          const missingContainer = document.getElementById('modal-missing-list');
+          missingContainer.innerHTML = report.missing_or_unclear_requirements.map(miss => `
+            <span class="px-2.5 py-1 bg-rose-50 text-rose-700 border border-rose-200 text-xs rounded-full font-medium">
+              ${miss}
+            </span>
+          `).join('') || '<span class="text-xs text-slate-400">None detected.</span>';
+
+          // Warnings
+          const warnContainer = document.getElementById('modal-warnings-container');
+          const warnList = document.getElementById('modal-warnings-list');
+          if (report.review_flags && report.review_flags.length > 0) {
+            warnContainer.classList.remove('hidden');
+            warnList.innerHTML = report.review_flags.map(f => `<li>${f}</li>`).join('');
+          } else {
+            warnContainer.classList.add('hidden');
+          }
+        }
+      } catch (e) {
+        console.warn("No report yet", e);
+      }
+
+      // Pre-fill email draft
+      generateDraft();
+      document.getElementById('candidate-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeCandidateModal() {
+      document.getElementById('candidate-modal').classList.add('hidden');
+      activeCandidateId = null;
+    }
+
+    async function submitReview(decision) {
+      if (!activeCandidateId) return;
+      try {
+        const res = await fetch(`/api/candidates/${activeCandidateId}/review`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ decision, recruiter_name: "Recruiter Admin", notes: "Reviewed in dashboard" })
+        });
+        if (res.ok) {
+          alert(`Decision '${decision}' recorded! State updated.`);
+          closeCandidateModal();
+          await initDashboard();
+        }
+      } catch (err) {
+        alert("Error submitting review: " + err);
+      }
+    }
+
+    async function generateDraft() {
+      if (!activeCandidateId) return;
+      try {
+        const res = await fetch(`/api/candidates/${activeCandidateId}/communications/draft`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ template_type: "interview_invitation" })
+        });
+        if (res.ok) {
+          const draft = await res.json();
+          document.getElementById('email-subject-input').value = draft.subject;
+          document.getElementById('email-body-input').value = draft.body;
+        }
+      } catch (err) {
+        console.error("Draft error", err);
+      }
+    }
+
+    async function sendDraftEmail() {
+      if (!activeCandidateId) return;
+      const subject = document.getElementById('email-subject-input').value;
+      const body = document.getElementById('email-body-input').value;
+      try {
+        const res = await fetch(`/api/candidates/${activeCandidateId}/communications/send`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ subject, body })
+        });
+        if (res.ok) {
+          alert("Email dispatched successfully by Communication Agent!");
+          await initDashboard();
+        }
+      } catch (err) {
+        alert("Send error: " + err);
+      }
+    }
+
+    async function fetchSlots() {
+      if (!activeCandidateId) return;
+      try {
+        const res = await fetch('/api/interviews/suggest-slots', {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ candidate_id: activeCandidateId, interviewer_email: "recruiter@company.com" })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const list = document.getElementById('modal-slots-list');
+          list.innerHTML = data.suggested_slots.map(s => {
+            const start = new Date(s.start_time);
+            return `
+              <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs flex flex-col justify-between">
+                <div>
+                  <p class="font-semibold text-slate-800">${start.toLocaleDateString()}</p>
+                  <p class="text-slate-500">${start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} UTC</p>
+                </div>
+                <button onclick="bookInterviewSlot('${s.start_time}', '${s.end_time}')" class="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white py-1 px-2 rounded text-[11px] font-medium transition">
+                  Book Slot
+                </button>
+              </div>
+            `;
+          }).join('');
+        }
+      } catch (err) {
+        alert("Slot search error: " + err);
+      }
+    }
+
+    async function bookInterviewSlot(start, end) {
+      if (!activeCandidateId) return;
+      try {
+        const res = await fetch('/api/interviews', {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            candidate_id: activeCandidateId,
+            interviewer_email: "recruiter@company.com",
+            start_time: start,
+            end_time: end,
+            title: "Technical Screen Interview"
+          })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          alert(`Interview successfully confirmed & scheduled!\nMeeting Link: ${data.meeting_link}`);
+          closeCandidateModal();
+          await initDashboard();
+        } else {
+          alert("Booking error or conflict detected.");
+        }
+      } catch (err) {
+        alert("Error booking interview: " + err);
+      }
+    }
+
+    function openNewJobModal() {
+      document.getElementById('new-job-modal').classList.remove('hidden');
+    }
+    function closeNewJobModal() {
+      document.getElementById('new-job-modal').classList.add('hidden');
+    }
+
+    async function submitNewJob(e) {
+      e.preventDefault();
+      const title = document.getElementById('new-job-title').value;
+      const department = document.getElementById('new-job-dept').value;
+      const description = document.getElementById('new-job-desc').value;
+      const reqSkills = document.getElementById('new-job-req-skills').value.split(',').map(s => s.trim()).filter(Boolean);
+      const prefSkills = document.getElementById('new-job-pref-skills').value.split(',').map(s => s.trim()).filter(Boolean);
+      const minExp = parseInt(document.getElementById('new-job-exp').value || "0");
+
+      try {
+        const res = await fetch('/api/jobs', {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title, department, description,
+            required_skills: reqSkills,
+            preferred_skills: prefSkills,
+            min_experience_years: minExp
+          })
+        });
+        if (res.ok) {
+          alert("Job Opening created successfully!");
+          closeNewJobModal();
+          await initDashboard();
+        }
+      } catch (err) {
+        alert("Error creating job: " + err);
+      }
+    }
+
+    window.onload = initDashboard;
+  </script>
+</body>
+</html>
