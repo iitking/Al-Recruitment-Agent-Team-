@@ -1,0 +1,17 @@
+{
+  "name": "ai-recruitment-agent-team-frontend",
+  "version": "1.0.0",
+  "description": "Recruiter Dashboard for AI Recruitment Agent Team",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "lucide": "^0.344.0"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.1",
+    "vite": "^5.1.4"
+  }
+}
